@@ -1,4 +1,5 @@
 import tensorflow as tf
+from pretrianGAN.config import config
 
 
 def lrelu(x):
@@ -13,7 +14,7 @@ def binary_cross_entropy(x, z):
 def discriminator(img_in, rate, reuse=None):
     activation = lrelu
     with tf.variable_scope("discriminator", reuse=reuse):
-        x = tf.reshape(img_in, shape=[-1, 28, 28, 1])
+        x = tf.reshape(img_in, shape=[-1] + config['IMAGE_DIM'] + [1])
         x = tf.layers.conv2d(x, kernel_size=5, filters=64, strides=2, padding='same', activation=activation)
         x = tf.layers.dropout(x, rate=rate)
         x = tf.layers.conv2d(x, kernel_size=5, filters=64, strides=1, padding='same', activation=activation)

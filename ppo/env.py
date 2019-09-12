@@ -1,9 +1,56 @@
-from classifier import SketchClassifier
 import numpy as np
 from skimage.draw import line, bezier_curve
-import utils as U
+from pretrianGAN.utils import discriminator
+import tensorflow as tf
+from ppo.config import config
+#import utils as U
 
 
+class SketchDiscriminator:
+    def __init__(self, path):
+        self.X = tf.placeholder(tf.float32, shape=[None] + config['STATE_DIM'] + [1], name='X')
+        self.score = discriminator(self.X, rate=1.0)
+
+        self.saver = tf.train.Saver()
+        self.sess = tf.Session()
+        self.init = tf.global_variables_initializer()
+        self.sess.run(self.init)
+        self.saver.restore(self.sess, tf.train.latest_checkpoint(path))
+
+    def inference(self, X):
+        X = X.reshape([-1] + config['STATE_DIM'] + [1])
+        result = self.sess.run(self.score, feed_dict={self.X: X})
+        return X.reshape(config['STATE_DIM']), result
+
+    def get_score(self, X):
+        X = X.reshape([-1] + config['STATE_DIM'] + [1])
+        _, scores = self.inference(X)
+        score = scores[0]
+
+        return score
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
 class CanvasEnvironment(object):
     def __init__(self, classifier=SketchClassifier(save_path='../trained_discr/1'), dim=[28, 28], max_stroke=40):
         self.classifier = classifier
@@ -83,10 +130,10 @@ class CanvasEnvironment(object):
             reward = 0
 
 
-        '''
-        if self.terminal:
-            reward = reward + np.log(score) + 0.7
-        '''
+        
+        #if self.terminal:
+        #    reward = reward + np.log(score) + 0.7
+        
 
         if self.terminal and self.stroke_count == 0:
             reward = -10
@@ -114,6 +161,6 @@ class CanvasEnvironment(object):
             return self.classifier.get_score(self.canvas.reshape(-1, self.dim[0], self.dim[1], 1), self.goal)
 
 
-
+'''
 
 

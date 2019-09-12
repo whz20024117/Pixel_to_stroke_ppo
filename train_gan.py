@@ -9,10 +9,10 @@ def main(sess):
     dloader = DataLoader(config['DATA_PATH'])
 
     tf.reset_default_graph()
-    batch_size = 64
-    n_noise = 64
+    batch_size = config['BATCH_SIZE']
+    n_noise = config['N_NOISE']
 
-    X_in = tf.placeholder(dtype=tf.float32, shape=[None, 28, 28], name='X')
+    X_in = tf.placeholder(dtype=tf.float32, shape=[None] + config['IMAGE_DIM'], name='X')
     noise = tf.placeholder(dtype=tf.float32, shape=[None, n_noise])
 
     rate = tf.placeholder(dtype=tf.float32, name='rate')
@@ -48,7 +48,7 @@ def main(sess):
         rate_train = 0.4
 
         n = np.random.uniform(0.0, 1.0, [batch_size, n_noise]).astype(np.float32)
-        batch = [np.reshape(b, [28, 28]) for b in dloader.next_batch(batch_size)]
+        batch = [np.reshape(b, config['IMAGE_DIM']) for b in dloader.next_batch(batch_size)]
 
         d_real_ls, d_fake_ls, g_ls, d_ls = sess.run([loss_d_real, loss_d_fake, loss_g, loss_d],
                                                     feed_dict={X_in: batch, noise: n, rate: rate_train,

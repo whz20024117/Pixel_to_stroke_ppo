@@ -10,6 +10,7 @@ class PPO:
         self.policy = policy
         self.old_policy = old_policy
         self.gamma = gamma
+        self.clip_value = clip_value
 
         policy_trainable = self.policy.get_trainable_variables()
         old_policy_trainable = self.old_policy.get_trainable_variables()
@@ -35,7 +36,7 @@ class PPO:
         with tf.variable_scope('loss/clip'):
 
             ratio = tf.exp(self.pd_old.neglogp(action_vec_old) - self.pd.neglogp(action_vec))
-            clipped_ratios = tf.clip_by_value(ratio, clip_value_min=1-config['CLIP'], clip_value_max=1+config['CLIP'])
+            clipped_ratios = tf.clip_by_value(ratio, clip_value_min=1-self.clip_value, clip_value_max=1+self.clip_value)
             loss_clip = tf.minimum(tf.multiply(self.advantages, ratio), tf.multiply(self.advantages, clipped_ratios))
             loss_clip = tf.reduce_mean(loss_clip)
 
@@ -62,9 +63,13 @@ class PPO:
         optimizer = tf.train.AdamOptimizer(config['LR'])
         self.train_op = optimizer.minimize(loss, var_list=self.policy.get_trainable_variables())
 
-#TODO: train method
-
-
+    def train(self, state, actions, rewards, v_preds_next, advantages):
+        return self.sess.run(self.train_op, feed_dict={self.policy.state: state,
+                                                       self.old_policy.state: state,
+                                                       self.actions: actions,
+                                                       self.rewards: rewards,
+                                                       self.v_preds_next: v_preds_next,
+                                                       self.advantages: advantages})
 
     def get_summary(self, state, actions, rewards, v_preds_next, advantages):
         return self.sess.run(self.merged, feed_dict={self.policy.state: state,
@@ -76,6 +81,12 @@ class PPO:
 
     def assign_parameters(self):
         return self.sess.run(self.assign_ops)
+
+    def act(self, state, stochastic=True):
+        if stochastic:
+            return self.sess.run(self.pd.sample(), feed_dict={self.policy.state: state})
+        else:
+            return self.sess.run(self.pd.mean, feed_dict={self.policy.state: state})
 
     def get_advantages(self, rewards, v_preds, v_preds_next):
         # https://github.com/uidilr/ppo_tf/blob/master/ppo.py
