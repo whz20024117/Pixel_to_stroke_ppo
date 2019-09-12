@@ -2,10 +2,11 @@ from pretrianGAN.DataLoader import DataLoader
 from pretrianGAN.utils import *
 import tensorflow as tf
 import numpy as np
+from pretrianGAN.config import config
 
 
-def main():
-    dloader = DataLoader("./data/triangle.npy")
+def main(sess):
+    dloader = DataLoader(config['DATA_PATH'])
 
     tf.reset_default_graph()
     batch_size = 64
@@ -39,19 +40,18 @@ def main():
         optimizer_d = tf.train.RMSPropOptimizer(learning_rate=0.00015).minimize(loss_d + d_reg, var_list=vars_d)
         optimizer_g = tf.train.RMSPropOptimizer(learning_rate=0.00015).minimize(loss_g + g_reg, var_list=vars_g)
 
-    sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
     for i in range(60000):
         train_d = True
         train_g = True
-        rate = 0.4
+        rate_train = 0.4
 
         n = np.random.uniform(0.0, 1.0, [batch_size, n_noise]).astype(np.float32)
         batch = [np.reshape(b, [28, 28]) for b in dloader.next_batch(batch_size)]
 
         d_real_ls, d_fake_ls, g_ls, d_ls = sess.run([loss_d_real, loss_d_fake, loss_g, loss_d],
-                                                    feed_dict={X_in: batch, noise: n, keep_prob: keep_prob_train,
+                                                    feed_dict={X_in: batch, noise: n, rate: rate_train,
                                                                is_training: True})
 
         d_real_ls = np.mean(d_real_ls)
@@ -67,16 +67,17 @@ def main():
             pass
 
         if train_d:
-            sess.run(optimizer_d, feed_dict={noise: n, X_in: batch, rate: rate, is_training: True})
+            sess.run(optimizer_d, feed_dict={noise: n, X_in: batch, rate: rate_train, is_training: True})
 
         if train_g:
-            sess.run(optimizer_g, feed_dict={noise: n, rate: rate, is_training: True})
+            sess.run(optimizer_g, feed_dict={noise: n, rate: rate_train, is_training: True})
 
         if i % 500 == 0:
             print("Generator loss: ", g_ls, "Discriminator loss: ", d_ls, "Step: ", i)
-    saver = tf.train.Saver()
-    saver.save(sess, "./pretrained_gan/1/model1.ckpt")
 
 
 if __name__ == '__main__':
-    main()
+    sess = tf.Session()
+    main(sess)
+    saver = tf.train.Saver()
+    saver.save(sess, config['SAVE_PATH'])
