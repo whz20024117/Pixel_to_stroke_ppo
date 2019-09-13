@@ -6,6 +6,9 @@ config = {
     'CLIP': 0.2,
     'GAMMA': 0.95,
     'C1': 1.0,      # value function parameter in loss
-    'C2': 0.0      # entropy bonus parameter in loss
+    'C2': 0.0,      # entropy bonus parameter in loss
+
+    'MAX_STROKE': 20,
+    'MAX_ITERATION':1000
 
 }

@@ -6,7 +6,7 @@ class Policy:
     def __init__(self, name:str):
 
         with tf.variable_scope(name):
-            self.state = tf.placeholder(dtype=tf.float32, shape=[None] + config['STATE_DIM'])
+            self.state = tf.placeholder(dtype=tf.float32, shape=[None] + config['STATE_DIM'] + [1])
 
             with tf.variable_scope('shared_cnn', reuse=False):
                 x = tf.layers.conv2d(self.state, filters=32, kernel_size=[7, 7], strides=(2, 2), padding='same',
@@ -43,17 +43,6 @@ class Policy:
                 self.value_pred = tf.layers.dense(x, 1, name='output')
 
             self.scope = tf.get_variable_scope().name
-
-    '''
-    def get_action_mean(self, state):
-        self.action_pred, feed_dict={self.state: state})
-        return a
-
-    def get_value(self, state):
-        v = self.sess.run(self.value_pred, feed_dict={self.state: state})
-        return v
-        
-    '''
 
     def get_variables(self):
         return tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, self.scope)

@@ -2,9 +2,11 @@ import tensorflow as tf
 from copy import deepcopy
 from ppo.config import config
 from ppo.distribution import DiagGaussianPdType
+from ppo.utils import scale
+import numpy as np
 
 
-class PPO:
+class PPOAgent:
     def __init__(self, sess, policy, old_policy, gamma=config['GAMMA'], clip_value=config['CLIP']):
         self.sess = sess
         self.policy = policy
@@ -30,8 +32,12 @@ class PPO:
         action_vec_old = self.old_policy.action_pred
 
         pdType = DiagGaussianPdType(size=config['ACTION_DIM'])
-        self.pd, self.pi_mean = pdType.pdfromlatent(action_vec)
-        self.pd_old, self.pi_mean_old = pdType.pdfromlatent(action_vec_old)
+
+        with tf.variable_scope('pd'):
+            self.pd, self.pi_mean = pdType.pdfromlatent(action_vec)
+
+        with tf.variable_scope('pd_old'):
+            self.pd_old, self.pi_mean_old = pdType.pdfromlatent(action_vec_old)
 
         with tf.variable_scope('loss/clip'):
 
@@ -83,10 +89,19 @@ class PPO:
         return self.sess.run(self.assign_ops)
 
     def act(self, state, stochastic=True):
+        # do_nothing, q_line, q_curve, x0_line, y0_line, x1_line ,y1_line,
+        # x0_c, y0_c, x1_c, y1_c, x2_c, y2_c, c
         if stochastic:
-            return self.sess.run(self.pd.sample(), feed_dict={self.policy.state: state})
+            policy_out = self.sess.run(self.pd.sample(), feed_dict={self.policy.state: state})
         else:
-            return self.sess.run(self.pd.mean, feed_dict={self.policy.state: state})
+            policy_out = self.sess.run(self.pd.mean, feed_dict={self.policy.state: state})
+
+        a = scale(policy_out[:, 0:3], -1, 1, 0, 1)
+        b = scale(policy_out[:, 3:13], -1, 1, 0, config['STATE_DIM'][0] - 1)
+        c = scale(policy_out[:, 13:14], -1, 1, -8, 8)
+
+        v_preds = self.sess.run(self.policy.value_pred, feed_dict={self.policy.state: state})
+        return np.concatenate([a, b, c], axis=1), v_preds
 
     def get_advantages(self, rewards, v_preds, v_preds_next):
         # https://github.com/uidilr/ppo_tf/blob/master/ppo.py
