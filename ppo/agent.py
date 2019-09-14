@@ -23,7 +23,7 @@ class PPOAgent:
                 self.assign_ops.append(tf.assign(v_old, v))
 
         with tf.variable_scope('train_inputs'):
-            self.actions = tf.placeholder(dtype=tf.int32, shape=[None], name='actions')
+            self.actions = tf.placeholder(dtype=tf.int32, shape=[None, config['ACTION_DIM']], name='actions')
             self.rewards = tf.placeholder(dtype=tf.float32, shape=[None], name='rewards')
             self.v_preds_next = tf.placeholder(dtype=tf.float32, shape=[None], name='v_preds_next')
             self.advantages = tf.placeholder(dtype=tf.float32, shape=[None], name='advantages')
@@ -70,6 +70,7 @@ class PPOAgent:
         self.train_op = optimizer.minimize(loss, var_list=self.policy.get_trainable_variables())
 
     def train(self, state, actions, rewards, v_preds_next, advantages):
+        state = state.reshape([-1]+config['STATE_DIM']+[1])
         return self.sess.run(self.train_op, feed_dict={self.policy.state: state,
                                                        self.old_policy.state: state,
                                                        self.actions: actions,
@@ -78,6 +79,7 @@ class PPOAgent:
                                                        self.advantages: advantages})
 
     def get_summary(self, state, actions, rewards, v_preds_next, advantages):
+        state = state.reshape([-1] + config['STATE_DIM'] + [1])
         return self.sess.run(self.merged, feed_dict={self.policy.state: state,
                                                      self.old_policy.state: state,
                                                      self.actions: actions,
@@ -100,7 +102,7 @@ class PPOAgent:
 
         a = scale(policy_out[:, 0:3], -1, 1, 0, 1)
         b = scale(policy_out[:, 3:13], -1, 1, 0, config['STATE_DIM'][0] - 1)
-        c = scale(policy_out[:, 13:14], -1, 1, -8, 8)
+        c = scale(policy_out[:, 13:14], -1, 1, 0, 4)
 
         v_preds = self.sess.run(self.policy.value_pred, feed_dict={self.policy.state: state})
         return np.concatenate([a, b, c], axis=1), v_preds

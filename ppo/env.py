@@ -3,7 +3,7 @@ from skimage.draw import line, bezier_curve
 from pretrianGAN.utils import discriminator
 import tensorflow as tf
 from ppo.config import config
-#import utils as U
+from ppo.utils import move_point
 
 
 class SketchDiscriminator:
@@ -60,9 +60,9 @@ class SketchDesigner:
             c_p = action[13]
 
         for i in range(axis.shape[0]):
-            if axis[i] < 0:
-                axis[i] = 1
-            elif axis[i] >= self.dim[0]:
+            if axis[i] < 2:
+                axis[i] = 2
+            elif axis[i] >= self.dim[0] - 2:
                 axis[i] = self.dim[0] - 2
 
         if action_category == 1:
@@ -74,20 +74,27 @@ class SketchDesigner:
         if action_category == 2:
             self.stroke_count += 1
             # Draw Curve
-            rr, cc = bezier_curve(axis[4], axis[5],
+            try:
+                rr, cc = bezier_curve(axis[4], axis[5],
                                   axis[6], axis[7],
                                   axis[8], axis[9],
-                                  c_p, shape=tuple(config['STATE_DIM']))
+                                  c_p)
+            # TODO: Fix this curve error
+            except MemoryError:
+                _x1, _y1 = move_point(axis[4], axis[5])
+                _x2, _y2 = move_point(axis[6], axis[7])
+                _x3, _y3 = move_point(axis[8], axis[9])
+                rr, cc = bezier_curve(_x1, _y1,
+                                      _x2, _y2,
+                                      _x3, _y3,
+                                      c_p)
             try:
                 self.canvas[rr, cc] = 1
             except IndexError:
-                print(axis[4], axis[5],
-                      axis[6], axis[7],
-                      axis[8], axis[9],
-                      c_p)
-                print(rr)
-                print(cc)
-                raise
+                rr = np.clip(rr, 0, config['STATE_DIM'][0] - 1)
+                cc = np.clip(cc, 0, config['STATE_DIM'][1] - 1)
+                self.canvas[rr, cc] = 1
+
 
         score = self.classifier.get_score(self.canvas.reshape(-1, self.dim[0], self.dim[1], 1))
 

@@ -76,15 +76,11 @@ def train(sess):
             saver.save(sess, config['SAVED_POLICY'] + '/model.ckpt')
             print('Model saved')
 
-        if iteration % 100 == 0:
+        if iteration % 10 == 0:
             print('Iteration {}, episode reward: {}'.format(iteration, sum(rewards)))
 
     writer.close()
 
-
-if __name__ == '__main__':
-    sess = tf.Session()
-    train(sess)
 
 
 
