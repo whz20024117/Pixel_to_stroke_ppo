@@ -47,13 +47,17 @@ class SketchDesigner:
         # do_nothing, q_line, q_curve, x0_line, y0_line, x1_line ,y1_line,
         # x0_c, y0_c, x1_c, y1_c, x2_c, y2_c, c
 
-        if self.stroke_count > self.max_stroke:
+        if self.stroke_count >= self.max_stroke - 1:
             self.terminal = True
 
         # Parameter Validation and noises
         action_category = np.argmax(action[0:3])
-        axis = np.asarray(action[3:13], dtype=np.uint8) + np.int_(np.random.normal(0, 2, action[3:13].shape[0]))
-        c_p = action[13] + np.random.normal(0, 1)
+        if self.stroke_count == 0:
+            axis = np.asarray(action[3:13], dtype=np.uint8) + np.int_(np.random.normal(0, 2, action[3:13].shape[0]))
+            c_p = action[13] + np.random.normal(0, 1)
+        else:
+            axis = np.asarray(action[3:13], dtype=np.uint8)
+            c_p = action[13]
 
         for i in range(axis.shape[0]):
             if axis[i] < 0:
@@ -87,7 +91,7 @@ class SketchDesigner:
 
         score = self.classifier.get_score(self.canvas.reshape(-1, self.dim[0], self.dim[1], 1))
 
-        if score > 0.99:
+        if score > 0.95:
             self.terminal = True
 
         if action_category == 0:

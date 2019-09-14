@@ -9,6 +9,11 @@ config = {
     'C2': 0.0,      # entropy bonus parameter in loss
 
     'MAX_STROKE': 20,
-    'MAX_ITERATION':1000
+    'MAX_ITERATION': 10000,
+    'T': 100,
+    'TRAIN_EPOCH': 5,
+    'BATCH_SIZE': 64,
 
+    'SAVED_GAN': './saved_gan/1',
+    'SAVED_POLICY': './saved_policy/1'
 }

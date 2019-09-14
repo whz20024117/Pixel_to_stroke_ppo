@@ -91,6 +91,8 @@ class PPOAgent:
     def act(self, state, stochastic=True):
         # do_nothing, q_line, q_curve, x0_line, y0_line, x1_line ,y1_line,
         # x0_c, y0_c, x1_c, y1_c, x2_c, y2_c, c
+        state = state.reshape([-1] + config['STATE_DIM'] + [1])
+
         if stochastic:
             policy_out = self.sess.run(self.pd.sample(), feed_dict={self.policy.state: state})
         else:
