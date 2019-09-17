@@ -81,13 +81,19 @@ class SketchDesigner:
                                   c_p)
             # TODO: Fix this curve error
             except MemoryError:
-                _x1, _y1 = move_point(axis[4], axis[5])
-                _x2, _y2 = move_point(axis[6], axis[7])
-                _x3, _y3 = move_point(axis[8], axis[9])
-                rr, cc = bezier_curve(_x1, _y1,
-                                      _x2, _y2,
-                                      _x3, _y3,
-                                      c_p)
+                while True:
+                    try:
+                        _x1, _y1 = move_point(axis[4], axis[5])
+                        _x2, _y2 = move_point(axis[6], axis[7])
+                        _x3, _y3 = move_point(axis[8], axis[9])
+                        rr, cc = bezier_curve(_x1, _y1,
+                                              _x2, _y2,
+                                              _x3, _y3,
+                                              c_p)
+                        break
+                    except MemoryError:
+                        continue
+
             try:
                 self.canvas[rr, cc] = 1
             except IndexError:

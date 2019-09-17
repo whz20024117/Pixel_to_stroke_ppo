@@ -9,8 +9,8 @@ def scale(x, old_min, old_max, new_min=0, new_max=1):
 
 def move_point(x, y):
     x_old, y_old = x, y
-    x = x_old + np.random.randint(-2, 3)
-    y = y_old + np.random.randint(-2, 3)
+    x = x_old + np.random.randint(-3, 4)
+    y = y_old + np.random.randint(-3, 4)
 
     while True:
         if x <= 0 or x >= config['STATE_DIM'][0] or x == x_old:
